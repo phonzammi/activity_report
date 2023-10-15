@@ -1,0 +1,285 @@
+import InputError from "@/Components/InputError";
+import InputLabel from "@/Components/InputLabel";
+import PrimaryButton from "@/Components/PrimaryButton";
+import TextInput from "@/Components/TextInput";
+import { Link, router, useForm, usePage } from "@inertiajs/react";
+import { Transition } from "@headlessui/react";
+import { FaTrash } from "react-icons/fa";
+import SecondaryButton from "@/Components/SecondaryButton";
+import { useRef } from "react";
+
+export default function UpdateProfileInformation({
+    mustVerifyEmail,
+    status,
+    className,
+}) {
+    const user = usePage().props.auth.user;
+    const fileInput = useRef(null);
+
+    const {
+        data,
+        setData,
+        post,
+        patch,
+        errors,
+        clearErrors,
+        processing,
+        recentlySuccessful,
+        setDefaults,
+        setError,
+        reset,
+        isDirty,
+    } = useForm({
+        name: user.name,
+        email: user.email,
+        profile_picture: null,
+        uploaded_profile_picture: user.profilePicture || null,
+
+        _method: "PATCH",
+    });
+
+    const removeLogo = () => {
+        if (data.uploaded_profile_picture) {
+            setData("uploaded_profile_picture", null);
+        } else {
+            setData("profile_picture", null);
+        }
+    };
+
+    const resetForm = () => {
+        if (fileInput.current) fileInput.current.value = null;
+        reset();
+        clearErrors();
+    };
+
+    const handleOnChangeProfilePic = (event) => {
+        if (event.target.type === "file" && event.target.files.length > 0) {
+            `${errors}.${event.target.name}` && clearErrors(event.target.name);
+            if (event.target.files[0].name.match(/\.(jpg|jpeg|png|gif)$/)) {
+                setData(
+                    event.target.name,
+                    Object.assign(event.target.files[0], {
+                        preview: URL.createObjectURL(event.target.files[0]),
+                    })
+                );
+            } else {
+                setData(event.target.name, event.target.files[0]);
+                setError(
+                    event.target.name,
+                    "Profile picture harus berupa gambar."
+                );
+            }
+        }
+    };
+
+    //     import { useRef } from "react";
+
+    // export default function Counter() {
+    //   const photoPreview = useRef(null);
+    //   const photoInput = useRef(null);
+
+    //   const selectNewPhoto = (event) => {
+    //     event.preventDefault();
+    //     photoInput.current.click();
+    //   };
+
+    //   const updatePhotoPreview = () => {
+    //     console.log(photoPreview);
+    //     const photo = photoInput.current.files[0];
+
+    //     if (!photo) {
+    //       return;
+    //     }
+
+    //     const reader = new FileReader();
+
+    //     reader.onload = (e) => {
+    //       photoPreview.current = e.target.result;
+    //     };
+
+    //     reader.readAsDataURL(photo);
+    //   };
+
+    //   return (
+    //     <>
+    //       <input
+    //         ref={photoInput}
+    //         type="file"
+    //         style={{ display: "none" }}
+    //         onChange={updatePhotoPreview}
+    //       />
+    //       {photoPreview.current && <img src={photoPreview.current} alt="gambar" />}
+    //       <button onClick={selectNewPhoto}>select image</button>
+    //     </>
+    //   );
+    // }
+
+    const submit = (e) => {
+        e.preventDefault();
+
+        post(route("profile.update"), {
+            onSuccess: () => {
+                setDefaults();
+            },
+            // onFinish: () => {
+            //     window.location.reload()
+            // },
+        });
+    };
+
+    return (
+        <div className="grid md:grid-cols-3 md:gap-2">
+            <section className={"md:col-span-2 " + className}>
+                <header>
+                    <h2 className="text-lg font-medium text-gray-900">
+                        Profile Information
+                    </h2>
+
+                    <p className="mt-1 text-sm text-gray-600">
+                        Update your account's profile information and email
+                        address.
+                    </p>
+                </header>
+
+                <form onSubmit={submit} className="mt-6 space-y-6">
+                    <div>
+                        <InputLabel htmlFor="name" value="Name" />
+
+                        <TextInput
+                            id="name"
+                            className="mt-1 block w-full"
+                            value={data.name}
+                            onChange={(event) =>
+                                setData("name", event.target.value)
+                            }
+                            required
+                            isInvalid={errors.name}
+                            isFocused
+                            autoComplete="name"
+                        />
+
+                        <InputError className="mt-2" message={errors.name} />
+                    </div>
+
+                    <div>
+                        <InputLabel htmlFor="email" value="Email" />
+
+                        <TextInput
+                            id="email"
+                            type="email"
+                            className="mt-1 block w-full"
+                            value={data.email}
+                            onChange={(event) =>
+                                setData("email", event.target.value)
+                            }
+                            required
+                            isInvalid={errors.email}
+                            autoComplete="username"
+                        />
+
+                        <InputError className="mt-2" message={errors.email} />
+                    </div>
+
+                    {!data.profile_picture?.preview &&
+                        !data.uploaded_profile_picture && (
+                            <div>
+                                <InputLabel
+                                    htmlFor="profile_picture"
+                                    value="Profile Picture"
+                                />
+
+                                <TextInput
+                                    id="profile_picture"
+                                    name="profile_picture"
+                                    type="file"
+                                    className="mt-1 block w-full"
+                                    onChange={handleOnChangeProfilePic}
+                                    accept="image/*"
+                                    isInvalid={errors.profile_picture}
+                                    ref={fileInput}
+                                    // required
+                                />
+
+                                <InputError
+                                    className="mt-2"
+                                    message={errors.profile_picture}
+                                />
+                            </div>
+                        )}
+
+                    {mustVerifyEmail && user.email_verified_at === null && (
+                        <div>
+                            <p className="text-sm mt-2 text-gray-800">
+                                Your email address is unverified.
+                                <Link
+                                    href={route("verification.send")}
+                                    method="post"
+                                    as="button"
+                                    className="underline text-sm text-gray-600 hover:text-gray-900 rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+                                >
+                                    Click here to re-send the verification
+                                    email.
+                                </Link>
+                            </p>
+
+                            {status === "verification-link-sent" && (
+                                <div className="mt-2 font-medium text-sm text-green-600">
+                                    A new verification link has been sent to
+                                    your email address.
+                                </div>
+                            )}
+                        </div>
+                    )}
+
+                    <div className="flex items-center gap-4">
+                        <PrimaryButton disabled={processing}>
+                            Save
+                        </PrimaryButton>
+
+                        <SecondaryButton
+                            onClick={() => resetForm()}
+                            disabled={!isDirty}
+                        >
+                            Reset
+                        </SecondaryButton>
+
+                        <Transition
+                            show={recentlySuccessful}
+                            enterFrom="opacity-0"
+                            leaveTo="opacity-0"
+                            className="transition ease-in-out"
+                        >
+                            <p className="text-sm text-gray-600">Saved.</p>
+                        </Transition>
+                    </div>
+                </form>
+            </section>
+            <div
+                className={
+                    "relative inline-flex items-center pt-2 md:pt-0" + className
+                }
+            >
+                {(data.profile_picture?.preview ||
+                    data.uploaded_profile_picture) && (
+                    <>
+                        <img
+                            src={
+                                data.profile_picture?.preview ||
+                                route("profile.picture")
+                            }
+                            className="mx-auto"
+                            alt="Logo"
+                        />
+                        <button
+                            type="button"
+                            className="w-7 h-7 text-white border border-gray-400 bg-red-600 rounded-full flex justify-center items-center absolute top-1 -right-1 hover:bg-red-400 transition-colors"
+                            onClick={() => removeLogo()}
+                        >
+                            <FaTrash className="h-3 w-3" />
+                        </button>
+                    </>
+                )}
+            </div>
+        </div>
+    );
+}
