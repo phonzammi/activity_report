@@ -26,7 +26,7 @@ class UserResource extends JsonResource
             'id' => $this->id,
             'name' => $this->name,
             'email' => $this->email,
-            'role' => $this->role->only('id', 'name'),
+            'role' => $this->role?->only('id', 'name'),
             // 'profilePicture' => $this->profile_pic_path && Storage::disk('public')->exists($this->profile_pic_path),
             'profilePhotoPath' => $this->profile_photo_path,
             'profilePhotoUrl' => $this->profile_photo_url,

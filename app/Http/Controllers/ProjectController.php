@@ -17,6 +17,7 @@ class ProjectController extends Controller
 {
     public function index() : Response
     {
+        $this->authorize('viewAny', Project::class);
         $projects = Project::with('client')->paginate();
 
         return Inertia::render("Project/Index", [

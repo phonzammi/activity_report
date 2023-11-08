@@ -6,6 +6,7 @@ use App\Models\Client;
 use App\Models\Role;
 use App\Models\User;
 use Illuminate\Auth\Access\HandlesAuthorization;
+use Illuminate\Auth\Access\Response;
 
 class ClientPolicy
 {
@@ -19,7 +20,7 @@ class ClientPolicy
      */
     public function viewAny(User $user)
     {
-        //
+        return in_array($user->role_id, Role::pluck('id')->toArray())  ? Response::allow() : Response::deny("Anda belum mempunyai Hak Akses !");
     }
 
     /**
@@ -42,7 +43,7 @@ class ClientPolicy
      */
     public function create(User $user)
     {
-        return $user->role_id == Role::IS_HSE_OFFICER;
+        return $user->role_id == Role::IS_HSE_OFFICER ? Response::allow() : Response::deny("Anda belum mempunyai Hak Akses !");
     }
 
     /**

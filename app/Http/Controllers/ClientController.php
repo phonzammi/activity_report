@@ -16,6 +16,8 @@ class ClientController extends Controller
 {
     public function index(): Response
     {
+        $this->authorize('viewAny', Client::class);
+
         $clients = Client::withCount('projects')->paginate();
         return Inertia::render("Client/Index", [
             'clients' => ClientsResource::collection($clients)
